@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+*.pt
+*.csv
+.pytest_cache/
+/data/
+/outputs/
+!/data/manifests/
+!/data/manifests/**

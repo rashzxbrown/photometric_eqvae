@@ -1,0 +1,14 @@
+uv run python -m pheq.cache_latents --ckpt outputs/runs/b1/ckpt_latest.pt --images /adialab/usr/rashed/photometric-eqvae/data/openimages/validation --out /adialab/usr/rashed/photometric-eqvae/data/latents/b1 --device cuda
+Cannot initialize model with low cpu memory usage because `accelerate` was not found in the environment. Defaulting to `low_cpu_mem_usage=False`. It is strongly recommended to install `accelerate` for faster and less memory-intense model loading. You can do so with: 
+```
+pip install accelerate
+```
+.
+/adialab/usr/rashed/photometric-eqvae/.venv/lib/python3.14/site-packages/huggingface_hub/utils/_validators.py:205: UserWarning: The `local_dir_use_symlinks` argument is deprecated and ignored in `hf_hub_download`. Downloading to a local directory does not use symlinks anymore.
+  warnings.warn(
+cached 41620 images -> 21 shard(s) in /adialab/usr/rashed/photometric-eqvae/data/latents/b1 (latent (4, 32, 32))
+  mean = [0.0119, -0.0137, 0.0009, -0.0233]
+  std  = [1.2652, 1.2448, 1.1778, 1.2178]
+  condition = b1  step = 20000
+saved -> /adialab/usr/rashed/photometric-eqvae/data/latents/b1/stats.json
+done. Shards + stats.json in /adialab/usr/rashed/photometric-eqvae/data/latents/b1
