@@ -305,6 +305,28 @@ nothing beyond seed noise; and the $90$K-parameter convolutional operator
 improves saturation slightly while degrading brightness ($10.0$ vs.\ $4.6$) so no evidence the
 latent color action is spatially heterogeneous.
 
+\paragraph{Where the residual error lives.}
+The converged EE of $4.4$--$4.9\,\de$ is above the color
+just-noticeable difference ($\approx\!2\,\de$), so the edits are visibly
+imperfect, but most of that error is plain reconstruction error, present
+with no edit at all. In Figure~\ref{fig:editing} the identity column (pure
+reconstruction) already carries per-image $\de$ of $2.9$--$5.9$, the edit
+columns sit at occasionally below that floor, and the per-pixel error
+maps concentrate on edges and fine texture rather than flat color regions:
+CIEDE2000 charges re-rendered detail as pixelwise color difference even
+when the global color is right. The oracle quantifies the same floor at
+scale: approximately the best \emph{any} latent edit can achieve still pays
+$2.4$--$3.9\,\de$ at the oracle magnitudes, i.e.\ $52$--$80\%$ of
+\textsc{p1}'s EE there. The operator-attributable remainder
+($0.9$--$2.4\,\de$) is consistent with the decoder being only approximately
+channel-affine in the latent (re-fitted $R^2$ $0.79$--$0.86$; the oracle's
+own edits are $79$--$90\%$ affine, departing with magnitude) and with
+pixel-range clipping at large magnitudes, which makes the true pixel map
+non-affine exactly where the operator must extrapolate; it is not primarily
+spatial heterogeneity, which \textsc{p3} had the capacity to exploit and
+did not.
+
+
 \paragraph{Single-factor transfer.}
 Training on one factor reaches near-ceiling on that factor (dedicated hue:
 $4.40$, the best hue of any run) and transfers partially to the others
@@ -344,7 +366,10 @@ spectral-only regularizer.
 control (\textsc{b1}) versus photometric-equivariant (\textsc{p1}) latents,
 at two model scales. Unconditional generation on OpenImages latents,
 cfg-free DDPM sampling; points below 30K steps are shown at reduced opacity
-(early FID-5K is noisy in both arms). DiT-B shows two seeds per arm (dashed:
+(early FID-5K is noisy in both arms). The early spike is common to the two
+arms, not a control artifact: at DiT-B both arms spike at 20K (the
+equivariant arm higher), at DiT-S the control at 30K; the arms differ in
+when they exit the transient. DiT-B shows two seeds per arm (dashed:
 seed 1); DiT-S one seed.}
 \label{fig:convergence}
 \end{figure}
@@ -362,17 +387,23 @@ We train unconditional DiT-S/2 (33M) and DiT-B/2 (130M)
 \textsc{p1}, identical hyperparameters, FID-5K \citep{parmar2022cleanfid}
 every 10K steps against a fixed reference of $10$K identically processed
 OpenImages images (Figure~\ref{fig:convergence}). The reference is drawn
-from the same $41$K-image pool the DiTs train on---no disjoint split was
-reserved---so absolute FID here measures fit to the training distribution;
+from the same $41$K-image pool the DiTs train on, so absolute FID here measures fit to the training distribution;
 every claim in this section is a paired comparison in which both arms share
-the identical reference. At DiT-S scale the equivariant latents lead
-throughout the 30--50K window $147$ vs.\ $202$ at 40K ($27\%$) and $112$
-vs.\ $121$ at 50K with a larger $44\%$ gap at 30K that partly reflects an
-early-FID transient in the control arm, and the arms meet at the endpoint
-($77.6$ vs.\ $77.9$). At DiT-B scale we ran two seeds per
-arm. The mid-training acceleration replicates in both ($18\%$ and $18\%$
-lower FID at 30K; $10\%$ and $18\%$ at 40K; pooled: $250$ vs.\ $303$ at 30K,
-$119$ vs.\ $138$ at 40K), making the acceleration consistent at both model scales and across both DiT-B seeds. Final quality is equal: pooled endpoints $57.2$ vs.\ $57.8$,
+the identical reference. Early training passes through a high-FID transient before settling onto a
+monotone descent, and the transient is not specific to either arm: at DiT-B
+both arms and seeds spike at 20K, the equivariant
+arm higher ($439/455$ vs.\ $360/350$), while at DiT-S the control spikes at
+30K ($352$). The arms differ in how quickly they exit this phase, not in
+whether they enter it, so we anchor comparisons at 40K and later, where all
+six curves are monotone. At DiT-S the equivariant latents lead at 40K
+($147$ vs.\ $202$, $27\%$) and 50K ($112$ vs.\ $121$), and the arms meet at
+the endpoint ($77.6$ vs.\ $77.9$); the much larger 30K gap ($44\%$) sits
+inside the control's transient and we do not lean on it. At DiT-B scale we
+ran two seeds per arm. The acceleration replicates in both ($10\%$ and
+$18\%$ lower FID at 40K; $18\%$ and $18\%$ at 30K, on the shared post-spike
+descent; pooled: $250$ vs.\ $303$ at 30K, $119$ vs.\ $138$ at 40K), and
+both controls cross FID $130$ a full checkpoint (10K steps) later than
+their equivariant counterparts making the acceleration consistent at both model scales and across both DiT-B seeds. Final quality is equal: pooled endpoints $57.2$ vs.\ $57.8$,
 with the between-seed spread of a single arm ($\approx\!1.5$ FID) exceeding
 the pooled difference; a small late-training edge visible in the first seed
 did not replicate in the second, and we do not claim it. The overall
@@ -429,10 +460,18 @@ Oscar cluster and ADIA Lab's cluster
 \IfFileExists{figures/fig1_editing.pdf}{%
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig1_editing.pdf}
+\includegraphics[width=\linewidth,height=0.9\textheight]{figures/fig1_editing.pdf}
 \caption{Latent-space color editing with the closed-form operator on the
-fine-tuned tokenizer: each column applies Eq.~\eqref{eq:closedform} for the
-labeled transform directly to the latent before decoding.}
+fine-tuned tokenizer.For each image: pixel-space targets $\tau_a(x)$ 
+(upper row), decoded latent edits $D(T_a\,E(x))$ (middle row), and the
+per-pixel $\de$ between them (lower row; shared $0$--$15$ scale, colorbar
+tick at the $\approx\!2$ JND), annotated with its mean. Each column applies
+Eq.~\eqref{eq:closedform} for the labeled transform directly to the latent
+before decoding. The identity column's map is the reconstruction floor;
+the error concentrates on edges and fine texture rather than flat color
+regions, and the edit columns sit close to that floor and the
+operator-attributable error is the excess over the identity column.}
+\label{fig:editing}
 \end{figure}}{%
 \noindent\fbox{\parbox{\linewidth}{\textbf{Figure pending:} generate with
 \texttt{scripts/make\_fig1\_editing.py} on the cluster (see
